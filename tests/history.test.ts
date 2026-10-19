@@ -3,6 +3,29 @@ import { decodeHistory, encodeHistory } from '@/lib/chat-history';
 import { documents } from '@/lib/knowledge/documents';
 
 describe('browser conversation history', () => {
+  it('caps saved conversations and retains the latest messages in each', () => {
+    const restored = decodeHistory(
+      encodeHistory({
+        activeId: 'chat-0',
+        conversations: Array.from({ length: 25 }, (_, index) => ({
+          id: `chat-${index}`,
+          title: `Chat ${index}`,
+          incomplete: false,
+          messages: Array.from({ length: 45 }, (_, message) => ({
+            id: `message-${message}`,
+            role: 'user' as const,
+            parts: [{ type: 'text' as const, text: `Message ${message}` }],
+          })),
+        })),
+      }),
+    );
+    expect(restored.conversations).toHaveLength(20);
+    expect(restored.conversations[0].id).toBe('chat-0');
+    expect(restored.conversations.at(-1)?.id).toBe('chat-19');
+    expect(restored.conversations[0].messages).toHaveLength(40);
+    expect(restored.conversations[0].messages[0].id).toBe('message-5');
+    expect(restored.conversations[0].messages.at(-1)?.id).toBe('message-44');
+  });
   it('does not write a history larger than the restore limit', () => {
     expect(() =>
       encodeHistory({

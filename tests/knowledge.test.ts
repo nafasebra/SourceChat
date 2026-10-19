@@ -3,6 +3,17 @@ import { retrieve } from '@/lib/knowledge/retrieve';
 import { createCitationFilter } from '@/lib/knowledge/citations';
 import { chatRequestSchema } from '@/lib/validation/chat';
 describe('retrieval', () => {
+  it('normalizes casing, punctuation, and repeated search terms', () => {
+    expect(retrieve('STREAMING!!!')).toEqual(retrieve('streaming'));
+    expect(retrieve('streaming streaming accessibility')).toEqual(
+      retrieve('streaming accessibility'),
+    );
+  });
+  it('handles blank queries and negative result limits', () => {
+    expect(retrieve('')).toEqual([]);
+    expect(retrieve('   ...!?')).toEqual([]);
+    expect(retrieve('streaming', -1)).toEqual([]);
+  });
   it('ranks exact topic matches first', () => {
     expect(retrieve('How does streaming with SSE work?')[0].id).toBe(
       'streaming',
@@ -20,6 +31,24 @@ describe('retrieval', () => {
   });
 });
 describe('citation filtering', () => {
+  it('handles citations streamed one character at a time', () => {
+    const filter = createCitationFilter(['streaming', 'citations']);
+    const text = 'See [[streaming]][[unknown]] and [[citations]].';
+    const answer =
+      Array.from(text)
+        .map((character) => filter.push(character))
+        .join('') + filter.push('', true);
+    expect(answer).toBe(
+      'See [[streaming]](unverified reference) and [[citations]].',
+    );
+  });
+  it('rejects case-mismatched and empty IDs while preserving literal brackets', () => {
+    const filter = createCitationFilter(['streaming']);
+    expect(filter.push('[[Streaming]] [[]] literal [', true)).toBe(
+      '(unverified reference) (unverified reference) literal [',
+    );
+    expect(filter.push('', true)).toBe('');
+  });
   it('accepts only retrieved IDs even across every possible chunk boundary', () => {
     const text = 'A [[streaming]] B [[forged]] C';
     for (let split = 0; split <= text.length; split++) {

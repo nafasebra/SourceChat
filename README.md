@@ -46,6 +46,18 @@ The app does not search the web. Citations point to local notes and do not guara
 
 History stays in this browser, with up to 20 conversations and 40 saved messages per conversation. There are no accounts or database.
 
+## Docker
+
+With Docker Desktop running, use your `.env.local` settings:
+
+```bash
+docker compose --env-file .env.local up --build -d
+```
+
+Open [localhost:3000](http://localhost:3000). If you keep settings in `.env`, use `docker compose up --build -d` instead. Environment files are excluded from the image; the API key is passed at runtime.
+
+Stop the app with `docker compose down`.
+
 ## Development
 
 ```bash
