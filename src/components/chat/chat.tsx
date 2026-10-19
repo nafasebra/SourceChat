@@ -21,6 +21,7 @@ import type { ChatMessage, ModelOption } from '@/lib/ai/types';
 import { documents, type Source } from '@/lib/knowledge/documents';
 import { Button } from '@/components/ui/button';
 import { Message } from './message';
+import { cn } from '@/lib/utils';
 import { useChatHistory } from '@/hooks/use-chat-history';
 
 const transport = new DefaultChatTransport<ChatMessage>({
@@ -212,26 +213,33 @@ export function Chat({
     composer.current?.focus();
   }
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <a className="brand" href="/" aria-label="SourceChat home">
-          <span className="brand-mark">
+    <div className="flex h-dvh min-h-[480px] overflow-hidden">
+      <aside className="flex w-[253px] shrink-0 flex-col border-r border-border bg-sidebar px-5 pt-8 pb-[18px] max-wide:w-[225px] max-desktop:hidden">
+        <a
+          className="flex items-center gap-[9px] text-[23px] font-bold tracking-[-1px] text-foreground no-underline"
+          href="/"
+          aria-label="SourceChat home"
+        >
+          <span className="flex text-accent">
             <Layers3 size={23} />
           </span>
-          SourceChat<span className="brand-dot">.</span>
+          SourceChat<span className="-ml-[9px] text-accent">.</span>
         </a>
         <Button
           variant="default"
-          className="new-chat"
+          className="mt-[33px] mb-8 h-14 min-h-14 justify-start bg-accent px-4 text-[13px] text-background shadow-[0_2px_3px_#00000003]"
           onClick={reset}
           disabled={busy}
         >
           <Plus size={21} />
-          New conversation<span className="key-hint">↵</span>
+          New conversation
+          <span className="ml-auto text-inherit opacity-65">↵</span>
         </Button>
-        <div className="sidebar-label">YOUR WORKSPACE</div>
+        <div className="mx-3 mb-3.5 text-[9px] font-semibold tracking-[1.5px] text-subtle">
+          YOUR WORKSPACE
+        </div>
         <button
-          className="nav-item active"
+          className="mb-[5px] flex w-full items-center gap-3 rounded-lg border-0 bg-[#e6ede3] p-3 text-left text-xs font-semibold text-[#2d624c] dark:bg-[#2d4033] dark:text-[#b5dcc0] [&>svg:last-child]:ml-auto"
           onClick={() => {
             setPanel(false);
             composer.current?.focus();
@@ -242,12 +250,22 @@ export function Chat({
           <ChevronRight size={14} />
         </button>
         {history.conversations.length > 0 && (
-          <nav className="history-list" aria-label="Conversation history">
-            <div className="sidebar-label">RECENT CONVERSATIONS</div>
+          <nav
+            className="my-[22px] min-h-0 flex-1 overflow-y-auto [&>div]:mb-2.5"
+            aria-label="Conversation history"
+          >
+            <div className="mx-3 mb-3.5 text-[9px] font-semibold tracking-[1.5px] text-subtle">
+              RECENT CONVERSATIONS
+            </div>
             {history.conversations.map((conversation) => (
               <button
                 key={conversation.id}
-                className={`history-item ${conversation.id === history.activeId ? 'current' : ''}`}
+                className={cn(
+                  'block w-full truncate rounded-lg border-0 px-3 py-[11px] text-left text-xs hover:bg-muted hover:text-foreground disabled:opacity-50',
+                  conversation.id === history.activeId
+                    ? 'bg-muted text-foreground'
+                    : 'bg-transparent text-subtle',
+                )}
                 aria-current={
                   conversation.id === history.activeId ? 'true' : undefined
                 }
@@ -261,8 +279,8 @@ export function Chat({
           </nav>
         )}
         {!history.conversations.length && (
-          <div className="sidebar-note">
-            <span className="note-icon">
+          <div className="mx-[9px] my-auto pt-[35px] pb-[50px] [&>h3]:mt-3.5 [&>h3]:mb-2 [&>h3]:text-[13px] [&>h3]:font-medium [&>p]:text-xs [&>p]:leading-[1.8] [&>p]:text-subtle">
+            <span className="text-accent">
               <BookOpen size={19} />
             </span>
             <h3>A little more grounded.</h3>
@@ -270,12 +288,14 @@ export function Chat({
               Answers informed by a small library. Sources you can actually
               explore.
             </p>
-            <span className="small-rule" />
+            <span className="mt-[25px] block h-0.5 w-[26px] bg-[#b9cabc]" />
           </div>
         )}
-        <div className="sidebar-bottom">
-          <div className="bottom-row">
-            <span className="eyebrow">BUILT TO BE OPEN</span>
+        <div className="border-t border-border px-2.5 pt-[18px] [&>p]:my-2 [&>p]:text-[10px] [&>p]:text-subtle">
+          <div className="mt-[22px] flex items-center justify-between [&>span]:text-[8px]">
+            <span className="text-[9px] font-semibold tracking-[1.5px] text-subtle">
+              BUILT TO BE OPEN
+            </span>
             <Button
               variant="ghost"
               size="icon"
@@ -290,14 +310,16 @@ export function Chat({
           </div>
         </div>
       </aside>
-      <main className="workspace">
-        <header className="topbar">
-          <div className="desktop-breadcrumb">
-            <span className="breadcrumb">Workspace</span>
+      <main className="relative flex min-w-0 flex-1 flex-col">
+        <header className="flex h-[75px] shrink-0 items-center justify-between border-b border-border px-[37px] [&_button]:text-[11px] [&_strong]:font-medium max-desktop:h-[58px] max-desktop:gap-0 max-desktop:pr-3 max-desktop:pl-[18px]">
+          <div className="flex items-center gap-3.5 text-[11px] max-desktop:hidden">
+            <span className="text-subtle">Workspace</span>
             <ChevronRight size={13} />
             <strong>New conversation</strong>
           </div>
-          <span className="mobile-brand brand">SourceChat.</span>
+          <span className="mr-auto hidden items-center gap-[9px] text-[19px] font-bold tracking-[-1px] text-foreground max-desktop:inline-flex">
+            SourceChat.
+          </span>
           <Button
             variant="ghost"
             size="icon"
@@ -314,18 +336,20 @@ export function Chat({
           <Button
             variant="ghost"
             onClick={() => setPanel(!panel)}
-            className="sources-toggle"
+            className="max-desktop:hidden"
             aria-expanded={panel}
             aria-controls="sources-panel"
           >
             <BookOpen size={16} />
             <span>Sources</span>
-            <span className="source-count">{sources.length}</span>
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[9px]">
+              {sources.length}
+            </span>
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="mobile-control"
+            className="hidden max-desktop:inline-flex max-desktop:h-11 max-desktop:w-10"
             onClick={reset}
             disabled={busy}
             aria-label="New conversation"
@@ -335,7 +359,7 @@ export function Chat({
           <Button
             variant="ghost"
             size="icon"
-            className="mobile-control"
+            className="hidden max-desktop:inline-flex max-desktop:h-11 max-desktop:w-10"
             onClick={() => {
               saveTheme(!dark);
               setDark(!dark);
@@ -347,7 +371,7 @@ export function Chat({
         </header>
         {history.conversations.length > 0 && (
           <select
-            className="mobile-history"
+            className="hidden max-desktop:mx-3 max-desktop:my-1.5 max-desktop:block max-desktop:w-[calc(100%_-_24px)] max-desktop:rounded-[7px] max-desktop:border max-desktop:border-border max-desktop:bg-sidebar max-desktop:p-[7px] max-desktop:text-xs max-desktop:text-foreground"
             aria-label="Conversation history"
             disabled={busy}
             value={
@@ -370,7 +394,7 @@ export function Chat({
           </select>
         )}
         <div
-          className="conversation-scroll"
+          className="flex-1 overflow-y-auto overscroll-contain"
           ref={scroller}
           onScroll={() => {
             const el = scroller.current!;
@@ -380,27 +404,30 @@ export function Chat({
           }}
         >
           {messages.length === 0 ? (
-            <section className="welcome">
-              <div className="welcome-tag">
-                <span className="status-dot" />A SMALL LIBRARY. BIG
-                POSSIBILITIES.
+            <section className="mx-auto w-full max-w-[790px] px-[35px] pt-[clamp(40px,7vh,95px)] pb-7 text-center large:pt-[11vh] max-wide:px-[25px] short-desktop:pt-8 short-desktop:pb-5 max-desktop:px-[22px] max-desktop:pt-[25px] max-desktop:pb-5">
+              <div className="flex items-center justify-center gap-2 text-[8px] tracking-[2px] text-subtle short-desktop:hidden max-desktop:text-[7px] max-desktop:tracking-[1px] short-mobile:hidden">
+                <span className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
+                A SMALL LIBRARY. BIG POSSIBILITIES.
               </div>
-              <div className="hero-symbol">
+              <div className="relative mx-auto mt-[34px] mb-[22px] grid h-[65px] w-[70px] place-items-center text-accent short-desktop:hidden max-desktop:mt-5 max-desktop:mb-3.5 short-mobile:hidden">
                 <Layers3 size={37} strokeWidth={1.25} />
-                <span className="sparkle-one">✦</span>
-                <span className="sparkle-two">✧</span>
+                <span className="absolute -right-0.5 top-px text-[19px] text-[#adbd91]">
+                  ✦
+                </span>
+                <span className="absolute bottom-[3px] left-px text-[15px] text-[#9aaa8a]">
+                  ✧
+                </span>
               </div>
-              <h1>
+              <h1 className="m-0 font-serif text-[clamp(32px,3.6vw,53px)] leading-[1.13] font-normal tracking-[-1.9px] [&>span]:text-accent max-desktop:text-[32px] max-desktop:tracking-[-1.5px]">
                 Good questions deserve
                 <br />
                 <span>grounded answers.</span>
               </h1>
-              <p className="hero-description">
+              <p className="mt-[22px] mb-[35px] text-[13px] leading-[1.9] text-subtle max-desktop:mt-[15px] max-desktop:mb-5 max-desktop:text-[11px]">
                 Meet your curious, source-conscious AI companion.
-                <br className="desktop-break" /> Ask a question. Follow the
-                thinking. Explore the sources.
+                <br /> Ask a question. Follow the thinking. Explore the sources.
               </p>
-              <div className="suggestions">
+              <div className="grid grid-cols-3 gap-3 text-left max-wide:gap-2 max-desktop:grid-cols-1 [&>button]:relative [&>button]:flex [&>button]:min-h-[153px] [&>button]:flex-col [&>button]:items-start [&>button]:rounded-xl [&>button]:border [&>button]:border-border [&>button]:bg-background [&>button]:px-[17px] [&>button]:pt-5 [&>button]:pb-[34px] [&>button]:text-left [&>button]:transition-colors [&>button]:duration-200 [&>button:hover]:border-[#9bad9e] [&>button:hover]:bg-sidebar [&>button>svg:first-child]:mb-[19px] [&>button>svg:first-child]:text-accent [&>button>span]:text-[7px] [&>button>span]:tracking-[1px] [&>button>strong]:mt-2 [&>button>strong]:max-w-[145px] [&>button>strong]:text-xs [&>button>strong]:leading-[1.6] [&>button>strong]:font-medium max-desktop:[&>button]:grid max-desktop:[&>button]:min-h-[58px] max-desktop:[&>button]:grid-cols-[25px_1fr_18px] max-desktop:[&>button]:items-center max-desktop:[&>button]:gap-x-2.5 max-desktop:[&>button]:p-[13px] max-desktop:[&>button>svg:first-child]:row-span-2 max-desktop:[&>button>svg:first-child]:m-0 max-desktop:[&>button>span]:text-[6px] max-desktop:[&>button>strong]:mt-[3px] max-desktop:[&>button>strong]:max-w-none max-desktop:[&>button>strong]:text-[11px]">
                 {suggestions.map(({ title, label, icon: Icon }) => (
                   <button
                     key={title}
@@ -408,14 +435,19 @@ export function Chat({
                     disabled={busy || (!mock && !selectedModel)}
                   >
                     <Icon size={20} strokeWidth={1.5} />
-                    <span className="eyebrow">{label}</span>
+                    <span className="text-[9px] font-semibold tracking-[1.5px] text-subtle">
+                      {label}
+                    </span>
                     <strong>{title}</strong>
-                    <ArrowRight size={17} className="suggestion-arrow" />
+                    <ArrowRight
+                      size={17}
+                      className="absolute right-3.5 bottom-[13px] text-subtle max-desktop:static max-desktop:col-start-3 max-desktop:row-start-1 max-desktop:row-end-3"
+                    />
                   </button>
                 ))}
               </div>
-              <div className="library-caption">
-                <span className="overlap-icons">
+              <div className="mt-[25px] flex items-center justify-center gap-[9px] text-[9px] text-subtle max-desktop:mt-[18px] max-desktop:gap-1.5 max-desktop:text-[8px]">
+                <span className="flex [&>svg+svg]:-ml-[5px] [&>svg+svg]:bg-background">
                   <FileText size={14} />
                   <FileText size={14} />
                 </span>
@@ -423,7 +455,7 @@ export function Chat({
               </div>
             </section>
           ) : (
-            <div className="messages">
+            <div className="m-auto w-full max-w-[770px] px-[35px] pt-10 pb-[25px] max-desktop:px-[22px] max-desktop:py-[26px]">
               {messages.map((message) => (
                 <Message
                   key={message.id}
@@ -436,15 +468,15 @@ export function Chat({
                 />
               ))}
               {busy && (
-                <div className="generation-status">
-                  <span className="status-dot pulse" />
+                <div className="flex items-center gap-2 py-[7px] text-xs text-subtle">
+                  <span className="inline-block size-1.5 shrink-0 animate-pulse rounded-full bg-accent" />
                   {status === 'submitted'
                     ? 'Finding relevant notes…'
                     : 'Writing from your sources…'}
                 </div>
               )}
               {notice && !busy && (
-                <div className="completion-notice">
+                <div className="flex items-center gap-2 py-[7px] text-xs text-subtle">
                   {notice}
                   {notice.includes('incomplete') && !error && (
                     <Button variant="ghost" onClick={retry}>
@@ -456,7 +488,11 @@ export function Chat({
             </div>
           )}
           {error && (
-            <div className="error-state" role="alert" aria-label="Chat error">
+            <div
+              className="mx-auto mt-[15px] mb-[30px] max-w-[650px] rounded-[10px] border border-[#caa59a] bg-sidebar p-5 [&>p]:my-2.5 [&>p]:text-xs [&>p]:text-subtle max-desktop:mx-5"
+              role="alert"
+              aria-label="Chat error"
+            >
               <strong>Something interrupted the conversation.</strong>
               <p>{error.message}</p>
               <Button variant="outline" onClick={retry}>
@@ -465,10 +501,10 @@ export function Chat({
             </div>
           )}
         </div>
-        <div className="composer-area">
+        <div className="relative mx-auto w-full max-w-[840px] px-[34px] pt-[18px] pb-[21px] max-wide:px-[25px] max-desktop:px-[15px] max-desktop:pt-3 max-desktop:pb-[15px]">
           {away && (
             <Button
-              className="jump-latest"
+              className="absolute -top-[35px] left-1/2 h-[30px] -translate-x-1/2 rounded-[30px] text-[11px] shadow-[0_2px_8px_#0001]"
               variant="outline"
               onClick={() => {
                 follow.current = true;
@@ -483,15 +519,20 @@ export function Chat({
             </Button>
           )}
           {modelError && (
-            <p className="model-error" role="alert">
+            <p
+              className="mb-2.5 text-xs leading-[1.6] text-subtle [&>a]:text-accent [&>a]:underline"
+              role="alert"
+            >
               {modelError} <a href="/">Reload models</a>
             </p>
           )}
           {history.storageNotice && (
-            <p className="storage-notice">{history.storageNotice}</p>
+            <p className="mb-2.5 text-[11px] text-subtle">
+              {history.storageNotice}
+            </p>
           )}
           {history.restoredIncomplete && !busy && !notice && (
-            <p className="completion-notice">
+            <p className="flex items-center gap-2 py-[7px] text-xs text-subtle">
               This saved answer is incomplete.{' '}
               <Button variant="ghost" onClick={retry}>
                 Retry response
@@ -499,7 +540,7 @@ export function Chat({
             </p>
           )}
           <form
-            className="composer"
+            className="rounded-[15px] border border-[#d5dbd2] bg-background px-[17px] pt-[17px] pb-[11px] shadow-[0_4px_18px_#283c2510] focus-within:border-[#8ba994] max-desktop:p-[13px] [&>textarea]:max-h-[180px] [&>textarea]:min-h-[49px] [&>textarea]:w-full [&>textarea]:resize-none [&>textarea]:border-0 [&>textarea]:bg-transparent [&>textarea]:font-sans [&>textarea]:text-[13px] [&>textarea]:leading-[1.6] [&>textarea]:text-foreground [&>textarea]:outline-none [&>textarea::placeholder]:text-subtle"
             onSubmit={(e) => {
               e.preventDefault();
               submit();
@@ -527,9 +568,9 @@ export function Chat({
                 }
               }}
             />
-            <div className="composer-toolbar">
+            <div className="flex items-center justify-between [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span]:text-[10px] [&>span]:text-subtle [&>button]:size-8 [&>button]:rounded-[9px] [&>button]:bg-[#2c5945] [&>button]:text-white [&>button:disabled]:opacity-45">
               <span>
-                <span className="tiny-sparkle">✦</span>
+                <span className="text-base text-accent">✦</span>
                 {mock ? (
                   <span>Test fixtures</span>
                 ) : (
@@ -539,7 +580,7 @@ export function Chat({
                     </label>
                     <select
                       id="model"
-                      className="model-select"
+                      className="min-w-0 max-w-[min(310px,45vw)] text-ellipsis rounded-md border border-border bg-background px-2 py-[5px] text-[10px] text-foreground focus-visible:outline-offset-3"
                       value={selectedModel}
                       disabled={busy || !models.length}
                       onChange={(event) => {
@@ -558,8 +599,8 @@ export function Chat({
                     </select>
                   </>
                 )}
-                <span className="toolbar-divider knowledge-context" />
-                <span className="knowledge-context">Local knowledge</span>
+                <span className="mx-[3px] h-2.5 w-px bg-border max-desktop:hidden" />
+                <span className="max-desktop:hidden">Local knowledge</span>
               </span>
               {busy ? (
                 <Button
@@ -584,7 +625,7 @@ export function Chat({
               )}
             </div>
           </form>
-          <p className="composer-footer">
+          <p className="mx-1 mt-[13px] flex justify-between gap-3 text-[8px] leading-[1.6] text-subtle max-desktop:justify-center max-desktop:text-center max-desktop:[&>span]:hidden">
             AI can make mistakes. Citations identify sources, not verified
             claims.<span>Enter to send · Shift + Enter for a new line</span>
           </p>
@@ -595,13 +636,15 @@ export function Chat({
       </main>
       {panel && (
         <aside
-          className="sources-panel"
+          className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l border-border bg-sidebar px-[23px] py-[26px] max-wide:absolute max-wide:inset-y-0 max-wide:right-0 max-wide:top-[75px] max-wide:z-20 max-wide:shadow-[-10px_0_40px_#0001] max-desktop:top-[58px] max-desktop:w-[min(360px,100%)]"
           id="sources-panel"
           aria-label="Sources"
         >
-          <div className="panel-header">
+          <div className="flex items-center justify-between [&_h2]:mt-[9px] [&_h2]:font-serif [&_h2]:text-[25px]">
             <div>
-              <span className="eyebrow">THE PAPER TRAIL</span>
+              <span className="text-[9px] font-semibold tracking-[1.5px] text-subtle">
+                THE PAPER TRAIL
+              </span>
               <h2 id="sources-heading" tabIndex={-1}>
                 {retrieved ? 'Retrieved sources' : 'Knowledge base'}
               </h2>
@@ -618,21 +661,26 @@ export function Chat({
               <X size={18} />
             </Button>
           </div>
-          <p className="panel-description">
+          <p className="my-[23px] text-[11px] leading-[1.8] text-subtle">
             {retrieved
               ? 'Notes retrieved for this response. A reference is not independent verification of a claim.'
               : 'Original learning notes that give this demo its context. Reference links provide further reading.'}
           </p>
-          <div className="source-list">
+          <div className="flex flex-col gap-3.5">
             {sources.length === 0 && (
               <p>No matching local sources were found.</p>
             )}
             {sources.map((source, i) => (
               <section
                 key={source.id}
-                className={`source-card ${selected === source.id ? 'selected' : ''}`}
+                className={cn(
+                  'rounded-[10px] border bg-background p-[17px] [&>h3]:mt-3.5 [&>h3]:mb-[9px] [&>h3]:text-[13px] [&>h3]:leading-[1.5] [&>h3]:font-semibold [&>p]:text-[11px] [&>p]:leading-[1.85] [&>p]:text-subtle [&>a]:mt-3.5 [&>a]:inline-block [&>a]:text-[10px] [&>a]:text-accent [&>a]:underline [&>a]:underline-offset-[3px]',
+                  selected === source.id
+                    ? 'border-accent ring-1 ring-accent'
+                    : 'border-border',
+                )}
               >
-                <div className="source-card-top">
+                <div className="flex items-center gap-2 text-[10px] text-accent [&>span:last-child]:ml-auto [&>span:last-child]:text-[7px] [&>span:last-child]:tracking-[1px] [&>span:last-child]:text-subtle">
                   <FileText size={17} />
                   <span>{String(i + 1).padStart(2, '0')}</span>
                   <span>
@@ -652,7 +700,9 @@ export function Chat({
                     Reference documentation ↗
                   </a>
                 ) : (
-                  <span className="local-reference">{source.reference}</span>
+                  <span className="mt-3.5 block font-mono text-[9px] wrap-anywhere text-subtle">
+                    {source.reference}
+                  </span>
                 )}
               </section>
             ))}

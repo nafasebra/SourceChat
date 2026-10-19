@@ -23,19 +23,26 @@ export function Message({
     message.parts.find((p) => p.type === 'data-sources')?.data ?? [];
   if (message.role === 'user')
     return (
-      <article className="user-message" aria-label="User message">
-        <span className="eyebrow">YOU</span>
+      <article
+        className="mt-0 mr-0 mb-[30px] ml-auto w-fit max-w-[85%] rounded-[15px_15px_3px_15px] border border-border bg-sidebar px-5 py-4 [&>p]:mt-1.5 [&>p]:text-sm [&>p]:leading-[1.7] [&>p]:wrap-anywhere [&>p]:whitespace-pre-wrap"
+        aria-label="User message"
+      >
+        <span className="text-[9px] font-semibold tracking-[1.5px] text-subtle">
+          YOU
+        </span>
         <p>{text}</p>
       </article>
     );
   return (
-    <article className="assistant-message" aria-label="SourceChat response">
-      <div className="message-byline">
-        <span className="mini-logo">
+    <article className="mb-[35px]" aria-label="SourceChat response">
+      <div className="mb-5 flex items-center gap-2.5 text-xs [&>span:last-child]:ml-auto [&>span:last-child]:text-[8px] max-desktop:[&>span:last-child]:text-[7px]">
+        <span className="grid size-7 place-items-center rounded-lg bg-muted text-accent">
           <Sparkles size={15} />
         </span>
         <strong>SourceChat</strong>
-        <span className="eyebrow">LOCAL KNOWLEDGE</span>
+        <span className="text-[9px] font-semibold tracking-[1.5px] text-subtle">
+          LOCAL KNOWLEDGE
+        </span>
       </div>
       <Markdown
         text={text}
@@ -43,7 +50,7 @@ export function Message({
         onCitation={(id) => onCitation(id, message.id)}
       />
       {text && (
-        <div className="message-actions">
+        <div className="mt-3 flex items-center gap-[3px] text-[10px] text-subtle [&>button]:size-[30px]">
           <Button
             variant="ghost"
             size="icon"
