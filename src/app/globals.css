@@ -89,12 +89,57 @@ h3:focus-visible {
 .new-chat {
   margin: 33px 0 32px;
   justify-content: flex-start;
-  height: 43px;
+  height: 56px;
+  min-height: 56px;
+  font-size: 13px;
+  padding-inline: 16px;
+  background: var(--accent);
+  color: var(--background);
   box-shadow: 0 2px 3px #00000003;
 }
 .key-hint {
   margin-left: auto;
+  color: inherit;
+  opacity: 0.65;
+}
+.history-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 22px 0;
+}
+.history-list .sidebar-label {
+  margin-bottom: 10px;
+}
+.history-item {
+  display: block;
+  text-align: left;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: var(--subtle);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-item:hover,
+.history-item.current {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.history-item:disabled {
+  opacity: 0.5;
+}
+.mobile-history {
+  display: none;
+}
+.storage-notice {
+  font-size: 11px;
+  color: var(--subtle);
+  margin-bottom: 10px;
 }
 .sidebar-label,
 .eyebrow {
@@ -754,6 +799,20 @@ h1 span {
   }
 }
 @media (max-width: 760px) {
+  .sources-toggle {
+    display: none;
+  }
+  .mobile-history {
+    display: block;
+    width: calc(100% - 24px);
+    margin: 6px 12px;
+    padding: 7px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 12px;
+    background: var(--sidebar);
+    color: var(--foreground);
+  }
   .knowledge-context {
     display: none;
   }
@@ -773,7 +832,8 @@ h1 span {
   }
   .mobile-control {
     display: inline-flex;
-    width: 32px;
+    width: 40px;
+    height: 44px;
   }
   .mobile-brand {
     display: inline-flex;

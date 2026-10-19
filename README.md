@@ -84,6 +84,7 @@ The client turns known citation tokens into keyboard-accessible controls. Clicki
 - Auto-scroll follows the response while the reader is near the bottom. Manual scrolling reveals a jump-to-latest control.
 - Markdown, code syntax highlighting, copy response, empty/loading/error states, stop, and manual retry.
 - Reduced-motion preferences disable animation and transitions.
+- Browser-local history restores the active chat after refresh and keeps up to 20 conversations, with the latest 40 messages in each saved chat. New conversation starts a fresh chat while retaining earlier entries. Desktop history buttons and the mobile history selector reopen saved chats. Partial or cancelled responses retain an incomplete marker; refreshing does not resume generation. Citation source metadata is rebuilt from the local library when loading saved messages.
 
 ## Tests and checks
 
@@ -99,7 +100,7 @@ Vitest covers retrieval ordering and no-match behavior, citation chunk boundarie
 
 To test a production build, run `npm run build`, then set `PLAYWRIGHT_PRODUCTION=1` before running the browser suite. Set `PLAYWRIGHT_CHANNEL=chrome` to use an existing Chrome installation instead of downloading Chromium. Set `CAPTURE_SCREENSHOTS=1` to refresh the documented browser captures. These flags are optional and are not needed for the default test commands.
 
-Verified on October 19, 2026: strict type checking, 30 Vitest tests, and `next build`. The real model catalog returned 18 free text models; desktop and mobile browser checks verified selection, the outgoing model ID, and citation focus with generation intercepted locally. Live OpenRouter generation has not been tested with a real API key.
+Verified on October 19, 2026: strict type checking, 34 Vitest tests, 12 Playwright cases against the production build, and `next build`. Browser tests include restoring chats after refresh and reopening saved conversations on desktop and mobile. The real model catalog returned 18 free text models; separate browser checks verified selection, the outgoing model ID, and citation focus with generation intercepted locally. Live OpenRouter generation has not been tested with a real API key.
 
 For a manual real-provider smoke test, enable real mode and ask “How does SSE streaming work?” Check that text appears progressively, a citation opens its local note, Stop halts generation, and Retry generates a replacement. Test invalid-key and quota errors separately. A real-provider smoke test requires your own key and is not established by mock tests.
 
@@ -113,11 +114,13 @@ Actual captures of the production app. The welcome screen uses the live model ca
 
 [Mobile model selector](docs/screenshots/mobile-models.png) · [Mobile citations](docs/screenshots/mobile-citations.png) · [Dark mode](docs/screenshots/chromium-dark.png) · [Mobile dark mode](docs/screenshots/mobile-dark.png)
 
+[Desktop conversation history](docs/screenshots/chromium-history.png) · [Mobile conversation history](docs/screenshots/mobile-history.png)
+
 ## Known limitations and next steps
 
 - Five curated notes and lexical matching are intentionally small. Follow-up retrieval uses the latest question only; it can miss context from earlier turns.
 - Citations validate provenance IDs, not semantic support or factual correctness. Model-written URLs are suppressed in the UI, not used as evidence.
-- Conversations are in memory and disappear on refresh. No persistence, accounts, database, or cross-tab sync.
+- History is stored only in this browser’s local storage. There is no account, server database, device sync, or cross-tab sync. Unavailable or full browser storage shows a notice and leaves the chat usable.
 - Forty-message history and bounded request sizes keep the learning project small; start a new conversation when the limit is reached.
 - No production abuse protection or distributed rate limiting. A public real-key deployment needs hosting-level request controls before unrestricted exposure.
 - The body length check runs after reading the request; configure an upstream body limit for hostile traffic.

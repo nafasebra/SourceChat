@@ -17,6 +17,19 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock('@ai-sdk/react', () => ({ useChat: () => state }));
 beforeEach(() => {
+  const values = new Map<string, string>();
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: vi.fn((key: string) => values.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => {
+        values.set(key, value);
+      }),
+      removeItem: vi.fn((key: string) => {
+        values.delete(key);
+      }),
+    },
+  });
   state.messages = [];
   state.status = 'ready';
   state.error = undefined;

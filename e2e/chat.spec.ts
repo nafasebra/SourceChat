@@ -1,4 +1,63 @@
 import { test, expect } from '@playwright/test';
+test('persists chats across refresh and reopens earlier conversations', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/');
+  await page
+    .getByRole('textbox', { name: 'Your message' })
+    .fill('How does SSE streaming work?');
+  await page.getByRole('textbox', { name: 'Your message' }).press('Enter');
+  await expect(
+    page.getByRole('button', {
+      name: 'View source: Streaming, one chunk at a time',
+    }),
+  ).toBeVisible({ timeout: 20000 });
+  await expect(
+    page.getByRole('button', { name: 'Send message' }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole('article', { name: 'User message' }),
+  ).toContainText('SSE streaming');
+  await page.getByRole('button', { name: 'New conversation' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await page
+    .getByRole('textbox', { name: 'Your message' })
+    .fill('Explain citations');
+  await page.getByRole('textbox', { name: 'Your message' }).press('Enter');
+  await expect(page.getByRole('button', { name: 'Send message' })).toBeVisible({
+    timeout: 20000,
+  });
+  if (testInfo.project.name === 'mobile') {
+    await page
+      .getByRole('combobox', { name: 'Conversation history' })
+      .selectOption({ label: 'How does SSE streaming work?' });
+  } else {
+    await page
+      .getByRole('navigation', { name: 'Conversation history' })
+      .getByRole('button', { name: 'How does SSE streaming work?' })
+      .click();
+  }
+  await expect(
+    page.getByRole('article', { name: 'User message' }),
+  ).toContainText('SSE streaming');
+  await page
+    .getByRole('button', {
+      name: 'View source: Streaming, one chunk at a time',
+    })
+    .click();
+  await expect(page.locator('#source-streaming')).toBeFocused();
+  if (process.env.CAPTURE_SCREENSHOTS)
+    await page.screenshot({
+      path: `docs/screenshots/${testInfo.project.name}-history.png`,
+      animations: 'disabled',
+      caret: 'initial',
+    });
+  await page.getByRole('button', { name: 'Open knowledge base' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Knowledge base' }),
+  ).toBeVisible();
+});
 test('streams an answer and navigates a citation with keyboard focus', async ({
   page,
 }, testInfo) => {

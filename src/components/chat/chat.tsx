@@ -21,6 +21,7 @@ import type { ChatMessage, ModelOption } from '@/lib/ai/types';
 import { documents, type Source } from '@/lib/knowledge/documents';
 import { Button } from '@/components/ui/button';
 import { Message } from './message';
+import { useChatHistory } from '@/hooks/use-chat-history';
 
 const transport = new DefaultChatTransport<ChatMessage>({
   api: '/api/chat',
@@ -109,6 +110,9 @@ export function Chat({
   } = useChat<ChatMessage>({
     transport,
     onFinish: ({ isAbort, isDisconnect, isError, finishReason }) => {
+      if (isAbort || isDisconnect || isError || finishReason !== 'stop')
+        history.markIncomplete();
+      else history.clearIncomplete();
       if (isAbort) setNotice('Generation stopped. This answer is incomplete.');
       else if (isDisconnect || isError || finishReason !== 'stop')
         setNotice(
@@ -118,6 +122,7 @@ export function Chat({
     },
   });
   const busy = status === 'submitted' || status === 'streaming';
+  const history = useChatHistory(messages, setMessages, busy);
   useEffect(() => {
     let preference: string | null = null;
     try {
@@ -139,14 +144,18 @@ export function Chat({
       scroller.current.scrollTop = scroller.current.scrollHeight;
   }, [messages, status, notice]);
   useEffect(() => {
-    if (selected && panel)
+    if (panel && sourceMessage === 'library')
+      document.getElementById('sources-heading')?.focus();
+    else if (selected && panel)
       document.getElementById(`source-${selected}`)?.focus();
   }, [selected, panel, sourceMessage]);
   const latestAssistant = [...messages]
     .reverse()
     .find((m) => m.role === 'assistant');
   const activeMessage =
-    messages.find((m) => m.id === sourceMessage) ?? latestAssistant;
+    sourceMessage === 'library'
+      ? undefined
+      : (messages.find((m) => m.id === sourceMessage) ?? latestAssistant);
   const retrieved = activeMessage?.parts.find(
     (p) => p.type === 'data-sources',
   )?.data;
@@ -157,7 +166,9 @@ export function Chat({
       .map((p) => p.text)
       .join('') ?? '';
   function submit(text = input) {
-    if (!text.trim() || busy || (!mock && !selectedModel)) return;
+    if (!text.trim() || busy || !history.ready || (!mock && !selectedModel))
+      return;
+    history.clearIncomplete();
     setInput('');
     setNotice('');
     clearError();
@@ -173,6 +184,7 @@ export function Chat({
     composer.current?.focus();
   }
   function retry() {
+    history.clearIncomplete();
     clearError();
     setNotice('');
     follow.current = true;
@@ -180,11 +192,23 @@ export function Chat({
     else void regenerate({ body: { model: selectedModel } });
   }
   function reset() {
-    setMessages([]);
+    history.startNew();
+    setInput('');
     clearError();
     setNotice('');
     setSelected('');
     setSourceMessage('');
+    composer.current?.focus();
+  }
+  function openHistory(id: string) {
+    if (busy) return;
+    history.openConversation(id);
+    clearError();
+    setNotice('');
+    setInput('');
+    setSelected('');
+    setSourceMessage('');
+    follow.current = true;
     composer.current?.focus();
   }
   return (
@@ -197,12 +221,12 @@ export function Chat({
           SourceChat<span className="brand-dot">.</span>
         </a>
         <Button
-          variant="outline"
+          variant="default"
           className="new-chat"
           onClick={reset}
           disabled={busy}
         >
-          <Plus size={17} />
+          <Plus size={21} />
           New conversation<span className="key-hint">↵</span>
         </Button>
         <div className="sidebar-label">YOUR WORKSPACE</div>
@@ -217,37 +241,39 @@ export function Chat({
           Ask SourceChat
           <ChevronRight size={14} />
         </button>
-        <button
-          className="nav-item"
-          onClick={() => {
-            setSourceMessage('');
-            setPanel(true);
-          }}
-        >
-          <BookOpen size={17} />
-          Knowledge base<span className="count">05</span>
-        </button>
-        <div className="sidebar-note">
-          <span className="note-icon">
-            <BookOpen size={19} />
-          </span>
-          <h3>A little more grounded.</h3>
-          <p>
-            Answers informed by a small library. Sources you can actually
-            explore.
-          </p>
-          <span className="small-rule" />
-        </div>
-        <div className="sidebar-bottom">
-          <div className="mode-indicator">
-            <span className="status-dot" />
-            {mock ? 'Test fixtures enabled' : 'OpenRouter · free models'}
+        {history.conversations.length > 0 && (
+          <nav className="history-list" aria-label="Conversation history">
+            <div className="sidebar-label">RECENT CONVERSATIONS</div>
+            {history.conversations.map((conversation) => (
+              <button
+                key={conversation.id}
+                className={`history-item ${conversation.id === history.activeId ? 'current' : ''}`}
+                aria-current={
+                  conversation.id === history.activeId ? 'true' : undefined
+                }
+                title={conversation.title}
+                disabled={busy}
+                onClick={() => openHistory(conversation.id)}
+              >
+                {conversation.title}
+              </button>
+            ))}
+          </nav>
+        )}
+        {!history.conversations.length && (
+          <div className="sidebar-note">
+            <span className="note-icon">
+              <BookOpen size={19} />
+            </span>
+            <h3>A little more grounded.</h3>
+            <p>
+              Answers informed by a small library. Sources you can actually
+              explore.
+            </p>
+            <span className="small-rule" />
           </div>
-          <p>
-            {mock
-              ? 'Local responses for automated tests.'
-              : 'Answers from your local library.'}
-          </p>
+        )}
+        <div className="sidebar-bottom">
           <div className="bottom-row">
             <span className="eyebrow">BUILT TO BE OPEN</span>
             <Button
@@ -274,7 +300,21 @@ export function Chat({
           <span className="mobile-brand brand">SourceChat.</span>
           <Button
             variant="ghost"
+            size="icon"
+            aria-label="Open knowledge base"
+            title="Knowledge base"
+            onClick={() => {
+              setSourceMessage('library');
+              setSelected('');
+              setPanel(true);
+            }}
+          >
+            <BookOpen size={19} />
+          </Button>
+          <Button
+            variant="ghost"
             onClick={() => setPanel(!panel)}
+            className="sources-toggle"
             aria-expanded={panel}
             aria-controls="sources-panel"
           >
@@ -305,6 +345,30 @@ export function Chat({
             <Moon size={17} />
           </Button>
         </header>
+        {history.conversations.length > 0 && (
+          <select
+            className="mobile-history"
+            aria-label="Conversation history"
+            disabled={busy}
+            value={
+              history.conversations.some(
+                (conversation) => conversation.id === history.activeId,
+              )
+                ? history.activeId
+                : ''
+            }
+            onChange={(event) =>
+              event.target.value ? openHistory(event.target.value) : reset()
+            }
+          >
+            <option value="">New conversation</option>
+            {history.conversations.map((conversation) => (
+              <option key={conversation.id} value={conversation.id}>
+                {conversation.title}
+              </option>
+            ))}
+          </select>
+        )}
         <div
           className="conversation-scroll"
           ref={scroller}
@@ -423,6 +487,17 @@ export function Chat({
               {modelError} <a href="/">Reload models</a>
             </p>
           )}
+          {history.storageNotice && (
+            <p className="storage-notice">{history.storageNotice}</p>
+          )}
+          {history.restoredIncomplete && !busy && !notice && (
+            <p className="completion-notice">
+              This saved answer is incomplete.{' '}
+              <Button variant="ghost" onClick={retry}>
+                Retry response
+              </Button>
+            </p>
+          )}
           <form
             className="composer"
             onSubmit={(e) => {
@@ -527,7 +602,9 @@ export function Chat({
           <div className="panel-header">
             <div>
               <span className="eyebrow">THE PAPER TRAIL</span>
-              <h2>{retrieved ? 'Retrieved sources' : 'Knowledge base'}</h2>
+              <h2 id="sources-heading" tabIndex={-1}>
+                {retrieved ? 'Retrieved sources' : 'Knowledge base'}
+              </h2>
             </div>
             <Button
               size="icon"
