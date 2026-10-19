@@ -9,7 +9,7 @@ export function getModel() {
     throw new Error(
       'OpenRouter is not configured. Set a server API key or enable MOCK_AI.',
     );
-  const id = process.env.OPENROUTER_MODEL || 'openrouter/free';
+  const id = process.env.OPENROUTER_MODEL || 'minimax/minimax-m3.1-flash:free';
   if (id !== 'openrouter/free' && !id.endsWith(':free'))
     throw new Error('Choose openrouter/free or a model ID ending in :free.');
   return createOpenRouter({ apiKey: key })(id);

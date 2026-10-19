@@ -25,12 +25,14 @@ Create an [OpenRouter API key](https://openrouter.ai/settings/keys), then set th
 ```dotenv
 MOCK_AI=false
 OPENROUTER_API_KEY=your-key
-OPENROUTER_MODEL=openrouter/free
+OPENROUTER_MODEL=minimax/minimax-m3.1-flash:free
 ```
 
 Restart the development server after changing environment values. Never prefix the key with `NEXT_PUBLIC_` or commit `.env.local`.
 
-The default [`openrouter/free`](https://openrouter.ai/openrouter/free) router selects from currently available free models. An explicit available model ID ending in `:free` can also be configured. Other IDs are rejected; there is no paid fallback. Availability, quotas, provider data policies, and model quality vary. No web search is enabled. Only real mode sends the conversation and retrieved notes to OpenRouter.
+The default model is [MiniMax M3.1 Flash (free)](https://openrouter.ai/minimax/minimax-m3.1-flash%3Afree), configured as `minimax/minimax-m3.1-flash:free`. Another available model ID ending in `:free`, or the `openrouter/free` router, can also be configured. Other IDs are rejected; there is no paid fallback. Availability, quotas, provider data policies, and model quality vary. No web search is enabled. Only real mode sends the conversation and retrieved notes to OpenRouter.
+
+SourceChat uses this model through `@openrouter/ai-sdk-provider` and Vercel AI SDK `streamText`. The standalone `@openrouter/sdk` example uses the same model endpoint; the application keeps the AI SDK transport for its streaming UI, cancellation, and citation filtering. The API key is always read from `OPENROUTER_API_KEY` on the server.
 
 ## Architecture
 

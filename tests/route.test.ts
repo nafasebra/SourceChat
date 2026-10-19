@@ -67,7 +67,7 @@ describe('chat route', () => {
   it('runs the real SDK/provider path against a mocked OpenRouter SSE response', async () => {
     vi.stubEnv('MOCK_AI', 'false');
     vi.stubEnv('OPENROUTER_API_KEY', 'test-secret');
-    vi.stubEnv('OPENROUTER_MODEL', 'openrouter/free');
+    vi.stubEnv('OPENROUTER_MODEL', '');
     const chunks = [
       {
         id: 'fixture',
@@ -116,6 +116,10 @@ describe('chat route', () => {
     const response = await POST(request('Explain streaming'));
     const body = await response.text();
     expect(upstream).toHaveBeenCalledOnce();
+    const [, init] = upstream.mock.calls[0];
+    expect(JSON.parse(String(init?.body)).model).toBe(
+      'minimax/minimax-m3.1-flash:free',
+    );
     expect(body).toContain('[[streaming]]');
     expect(body).toContain('(unverified reference)');
     expect(body).not.toContain('[[forged]]');
