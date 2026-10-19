@@ -18,6 +18,17 @@
   --color-subtle: var(--subtle);
   --color-accent: var(--accent);
   --color-sidebar: var(--sidebar);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--background);
+  --color-secondary: var(--muted);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted-foreground: var(--subtle);
+  --color-accent-foreground: var(--background);
+  --color-card: var(--background);
+  --color-card-foreground: var(--foreground);
+  --color-input: var(--border);
+  --color-ring: var(--accent);
+  --color-destructive: var(--destructive);
   --font-sans: Arial, Helvetica, sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
@@ -34,6 +45,7 @@
   --subtle: #6f7772;
   --accent: #237a65;
   --sidebar: #f5f6f1;
+  --destructive: #b33d35;
 }
 .dark {
   --background: #171d1b;
@@ -43,6 +55,7 @@
   --subtle: #a3b1a7;
   --accent: #8bd1b5;
   --sidebar: #1d2520;
+  --destructive: #f27b72;
   color-scheme: dark;
 }
 @layer base {
@@ -61,6 +74,7 @@
   *,
   ::before,
   ::after {
+    @apply border-border;
     @apply motion-reduce:animate-none! motion-reduce:transition-none! motion-reduce:scroll-auto!;
   }
 }

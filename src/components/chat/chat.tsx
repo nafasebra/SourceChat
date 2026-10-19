@@ -20,6 +20,13 @@ import {
 import type { ChatMessage, ModelOption } from '@/lib/ai/types';
 import { documents, type Source } from '@/lib/knowledge/documents';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from '@/components/ui/native-select';
+import { Card } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Message } from './message';
 import { cn } from '@/lib/utils';
 import { useChatHistory } from '@/hooks/use-chat-history';
@@ -341,8 +348,9 @@ export function Chat({
           </Button>
         </header>
         {history.conversations.length > 0 && (
-          <select
-            className="hidden max-desktop:mx-3 max-desktop:my-1.5 max-desktop:block max-desktop:w-[calc(100%_-_24px)] max-desktop:rounded-[7px] max-desktop:border max-desktop:border-border max-desktop:bg-sidebar max-desktop:p-[7px] max-desktop:text-xs max-desktop:text-foreground"
+          <NativeSelect
+            wrapperClassName="hidden max-desktop:mx-3 max-desktop:my-1.5 max-desktop:block max-desktop:w-[calc(100%_-_24px)]"
+            className="bg-sidebar text-xs text-foreground"
             aria-label="Conversation history"
             disabled={busy}
             value={
@@ -356,13 +364,13 @@ export function Chat({
               event.target.value ? openHistory(event.target.value) : reset()
             }
           >
-            <option value="">New conversation</option>
+            <NativeSelectOption value="">New conversation</NativeSelectOption>
             {history.conversations.map((conversation) => (
-              <option key={conversation.id} value={conversation.id}>
+              <NativeSelectOption key={conversation.id} value={conversation.id}>
                 {conversation.title}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
         )}
         <div
           className="flex-1 overflow-y-auto overscroll-contain"
@@ -459,17 +467,18 @@ export function Chat({
             </div>
           )}
           {error && (
-            <div
-              className="mx-auto mt-[15px] mb-[30px] max-w-[650px] rounded-[10px] border border-[#caa59a] bg-sidebar p-5 [&>p]:my-2.5 [&>p]:text-xs [&>p]:text-subtle max-desktop:mx-5"
-              role="alert"
+            <Alert
+              className="mx-auto mt-[15px] mb-[30px] max-w-[650px] rounded-[10px] border-[#caa59a] bg-sidebar p-5 max-desktop:mx-5"
               aria-label="Chat error"
             >
-              <strong>Something interrupted the conversation.</strong>
-              <p>{error.message}</p>
-              <Button variant="outline" onClick={retry}>
-                Retry response
-              </Button>
-            </div>
+              <AlertTitle>Something interrupted the conversation.</AlertTitle>
+              <AlertDescription className="gap-2.5 text-xs">
+                <p>{error.message}</p>
+                <Button variant="outline" onClick={retry}>
+                  Retry response
+                </Button>
+              </AlertDescription>
+            </Alert>
           )}
         </div>
         <div className="relative mx-auto w-full max-w-[840px] px-[34px] pt-[18px] pb-[21px] max-wide:px-[25px] max-desktop:px-[15px] max-desktop:pt-3 max-desktop:pb-[15px]">
@@ -490,12 +499,16 @@ export function Chat({
             </Button>
           )}
           {modelError && (
-            <p
-              className="mb-2.5 text-xs leading-[1.6] text-subtle [&>a]:text-accent [&>a]:underline"
-              role="alert"
-            >
-              {modelError} <a href="/">Reload models</a>
-            </p>
+            <Alert className="mb-2.5 bg-sidebar">
+              <AlertDescription className="text-xs">
+                <p>
+                  {modelError}{' '}
+                  <a className="text-accent underline" href="/">
+                    Reload models
+                  </a>
+                </p>
+              </AlertDescription>
+            </Alert>
           )}
           {history.storageNotice && (
             <p className="mb-2.5 text-[11px] text-subtle">
@@ -520,7 +533,8 @@ export function Chat({
             <label htmlFor="prompt" className="sr-only">
               Your message
             </label>
-            <textarea
+            <Textarea
+              className="field-sizing-fixed rounded-none p-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
               id="prompt"
               ref={composer}
               value={input}
@@ -539,8 +553,8 @@ export function Chat({
                 }
               }}
             />
-            <div className="flex items-center justify-between [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span]:text-[10px] [&>span]:text-subtle [&>button]:size-8 [&>button]:rounded-[9px] [&>button]:bg-[#2c5945] [&>button]:text-white [&>button:disabled]:opacity-45">
-              <span>
+            <div className="flex items-center justify-between [&>button]:size-8 [&>button]:rounded-[9px] [&>button]:bg-[#2c5945] [&>button]:text-white [&>button:disabled]:opacity-45">
+              <div className="flex min-w-0 items-center gap-2 text-[10px] text-subtle">
                 <span className="text-base text-accent">✦</span>
                 {mock ? (
                   <span>Test fixtures</span>
@@ -549,9 +563,11 @@ export function Chat({
                     <label htmlFor="model" className="sr-only">
                       AI model
                     </label>
-                    <select
+                    <NativeSelect
                       id="model"
-                      className="min-w-0 max-w-[min(310px,45vw)] text-ellipsis rounded-md border border-border bg-background px-2 py-[5px] text-[10px] text-foreground focus-visible:outline-offset-3"
+                      size="sm"
+                      wrapperClassName="min-w-0 max-w-[min(310px,45vw)]"
+                      className="text-ellipsis bg-background pl-2 text-[10px] text-foreground"
                       value={selectedModel}
                       disabled={busy || !models.length}
                       onChange={(event) => {
@@ -560,19 +576,21 @@ export function Chat({
                       }}
                     >
                       {!models.length && (
-                        <option value="">No available models</option>
+                        <NativeSelectOption value="">
+                          No available models
+                        </NativeSelectOption>
                       )}
                       {models.map((model) => (
-                        <option key={model.id} value={model.id}>
+                        <NativeSelectOption key={model.id} value={model.id}>
                           {model.name}
-                        </option>
+                        </NativeSelectOption>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </>
                 )}
                 <span className="mx-[3px] h-2.5 w-px bg-border max-desktop:hidden" />
                 <span className="max-desktop:hidden">Local knowledge</span>
-              </span>
+              </div>
               {busy ? (
                 <Button
                   size="icon"
@@ -642,10 +660,10 @@ export function Chat({
               <p>No matching local sources were found.</p>
             )}
             {sources.map((source, i) => (
-              <section
+              <Card
                 key={source.id}
                 className={cn(
-                  'rounded-[10px] border bg-background p-[17px] [&>h3]:mt-3.5 [&>h3]:mb-[9px] [&>h3]:text-[13px] [&>h3]:leading-[1.5] [&>h3]:font-semibold [&>p]:text-[11px] [&>p]:leading-[1.85] [&>p]:text-subtle [&>a]:mt-3.5 [&>a]:inline-block [&>a]:text-[10px] [&>a]:text-accent [&>a]:underline [&>a]:underline-offset-[3px]',
+                  'gap-0 rounded-[10px] border bg-background p-[17px] shadow-none [&>h3]:mt-3.5 [&>h3]:mb-[9px] [&>h3]:text-[13px] [&>h3]:leading-[1.5] [&>h3]:font-semibold [&>p]:text-[11px] [&>p]:leading-[1.85] [&>p]:text-subtle [&>a]:mt-3.5 [&>a]:inline-block [&>a]:text-[10px] [&>a]:text-accent [&>a]:underline [&>a]:underline-offset-[3px]',
                   selected === source.id
                     ? 'border-accent ring-1 ring-accent'
                     : 'border-border',
@@ -675,7 +693,7 @@ export function Chat({
                     {source.reference}
                   </span>
                 )}
-              </section>
+              </Card>
             ))}
           </div>
         </aside>

@@ -2,6 +2,8 @@
 
 A simple AI chat app built with Next.js, TypeScript, Tailwind CSS, and the Vercel AI SDK.
 
+UI components are copied manually from [shadcn/ui](https://ui.shadcn.com) into `src/components/ui` and styled for SourceChat. Their MIT license is included in that folder.
+
 ## Features
 
 - Choose from available free OpenRouter models.
