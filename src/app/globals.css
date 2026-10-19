@@ -399,6 +399,31 @@ h1 span {
   font-size: 10px;
   color: var(--subtle);
 }
+.model-select {
+  max-width: min(310px, 45vw);
+  min-width: 0;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font: inherit;
+  text-overflow: ellipsis;
+}
+.model-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.model-error {
+  font-size: 12px;
+  color: var(--subtle);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.model-error a {
+  color: var(--accent);
+  text-decoration: underline;
+}
 .tiny-sparkle {
   color: var(--accent);
   font-size: 16px;
@@ -729,6 +754,9 @@ h1 span {
   }
 }
 @media (max-width: 760px) {
+  .knowledge-context {
+    display: none;
+  }
   .sidebar {
     display: none;
   }

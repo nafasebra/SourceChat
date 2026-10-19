@@ -6,7 +6,8 @@ import {
 import { chatRequestSchema } from '@/lib/validation/chat';
 import { retrieve } from '@/lib/knowledge/retrieve';
 import { createCitationFilter } from '@/lib/knowledge/citations';
-import { getModel, isMockMode } from '@/lib/ai/provider';
+import { getDefaultModelId, getModel, isMockMode } from '@/lib/ai/provider';
+import { getFreeModels } from '@/lib/ai/models';
 import { mockAnswer } from '@/lib/ai/mock';
 import type { ChatMessage } from '@/lib/ai/types';
 import { publicError } from '@/lib/ai/errors';
@@ -55,10 +56,28 @@ export async function POST(request: Request) {
   let model: ReturnType<typeof getModel> | undefined;
   if (!mock) {
     try {
-      model = getModel();
+      const selectedId = parsed.data.model || getDefaultModelId();
+      model = getModel(selectedId);
+      const available = await getFreeModels();
+      if (!available.some((option) => option.id === selectedId)) {
+        return Response.json(
+          {
+            error:
+              'This model is no longer listed as a free text model. Reload and choose an available model.',
+          },
+          { status: 400 },
+        );
+      }
     } catch (error) {
       return Response.json(
-        { error: (error as Error).message },
+        {
+          error:
+            error instanceof Error &&
+            (error.message.startsWith('OpenRouter is not configured') ||
+              error.message.startsWith('Choose openrouter/free'))
+              ? error.message
+              : 'Could not check available models. Reload the page and try again.',
+        },
         { status: 503 },
       );
     }

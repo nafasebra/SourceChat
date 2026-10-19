@@ -65,7 +65,7 @@ export const documents: Source[] = [
       'build',
     ],
     content:
-      'SourceChat uses Next.js App Router and strict TypeScript. The page is a Server Component and chat is a Client Component using useChat. The POST /api/chat route validates text-only conversation input with Zod, retrieves local notes, and streams a response with the Vercel AI SDK. The OpenRouter key stays in server environment variables. MOCK_AI defaults to true and streams deterministic local fixtures through the same UI message protocol without external calls. No database, authentication, or paid model is required.',
+      'SourceChat uses Next.js App Router and strict TypeScript. The page is a Server Component and chat is a Client Component using useChat. The POST /api/chat route validates text-only conversation input with Zod, retrieves local notes, and streams a response with the Vercel AI SDK. The OpenRouter key stays in server environment variables. Real mode is the default and offers available free OpenRouter text models. Explicitly enabling MOCK_AI streams deterministic test fixtures through the same UI message protocol without external calls. No database, authentication, or paid model is required.',
   },
   {
     id: 'testing',

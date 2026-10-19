@@ -3,11 +3,21 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/chat/route';
 import { publicError } from '@/lib/ai/errors';
 import { getModel } from '@/lib/ai/provider';
+import { getFreeModels } from '@/lib/ai/models';
+
+vi.mock('@/lib/ai/models', () => ({
+  getFreeModels: vi.fn(async () => [
+    { id: 'minimax/minimax-m3.1-flash:free', name: 'MiniMax' },
+    { id: 'example/alternate:free', name: 'Alternate free model' },
+    { id: 'openrouter/free', name: 'Free models router' },
+  ]),
+}));
 afterEach(() => vi.unstubAllEnvs());
-const request = (text: string) =>
+const request = (text: string, model?: string) =>
   new Request('http://localhost/api/chat', {
     method: 'POST',
     body: JSON.stringify({
+      model,
       messages: [{ id: 'u', role: 'user', parts: [{ type: 'text', text }] }],
     }),
   });
@@ -64,67 +74,82 @@ describe('chat route', () => {
     expect(publicError({ statusCode: 429 })).toContain('rate limited');
     expect(publicError(new Error('secret-key'))).not.toContain('secret-key');
   });
-  it('runs the real SDK/provider path against a mocked OpenRouter SSE response', async () => {
+  it.each([undefined, 'example/alternate:free'])(
+    'runs the real SDK/provider path with selected model %s',
+    async (selectedModel) => {
+      vi.stubEnv('MOCK_AI', 'false');
+      vi.stubEnv('OPENROUTER_API_KEY', 'test-secret');
+      vi.stubEnv('OPENROUTER_MODEL', '');
+      const chunks = [
+        {
+          id: 'fixture',
+          object: 'chat.completion.chunk',
+          created: 1,
+          model: 'fixture:free',
+          choices: [
+            {
+              index: 0,
+              delta: { role: 'assistant', content: 'Streaming works [[' },
+              finish_reason: null,
+            },
+          ],
+        },
+        {
+          id: 'fixture',
+          object: 'chat.completion.chunk',
+          created: 1,
+          model: 'fixture:free',
+          choices: [
+            {
+              index: 0,
+              delta: { content: 'streaming]] [[forged]]' },
+              finish_reason: null,
+            },
+          ],
+        },
+        {
+          id: 'fixture',
+          object: 'chat.completion.chunk',
+          created: 1,
+          model: 'fixture:free',
+          choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 10, completion_tokens: 8, total_tokens: 18 },
+        },
+      ];
+      const upstream = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(
+          new Response(
+            chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('') +
+              'data: [DONE]\n\n',
+            { headers: { 'Content-Type': 'text/event-stream' } },
+          ),
+        );
+      const response = await POST(request('Explain streaming', selectedModel));
+      const body = await response.text();
+      expect(upstream).toHaveBeenCalledOnce();
+      const [, init] = upstream.mock.calls[0];
+      expect(JSON.parse(String(init?.body)).model).toBe(
+        selectedModel ?? 'minimax/minimax-m3.1-flash:free',
+      );
+      expect(body).toContain('[[streaming]]');
+      expect(body).toContain('(unverified reference)');
+      expect(body).not.toContain('[[forged]]');
+      expect(body).not.toContain('test-secret');
+      expect(body).toContain('"type":"finish"');
+    },
+  );
+  it('rejects a free-suffixed ID absent from the catalog before any generation', async () => {
     vi.stubEnv('MOCK_AI', 'false');
     vi.stubEnv('OPENROUTER_API_KEY', 'test-secret');
-    vi.stubEnv('OPENROUTER_MODEL', '');
-    const chunks = [
-      {
-        id: 'fixture',
-        object: 'chat.completion.chunk',
-        created: 1,
-        model: 'fixture:free',
-        choices: [
-          {
-            index: 0,
-            delta: { role: 'assistant', content: 'Streaming works [[' },
-            finish_reason: null,
-          },
-        ],
-      },
-      {
-        id: 'fixture',
-        object: 'chat.completion.chunk',
-        created: 1,
-        model: 'fixture:free',
-        choices: [
-          {
-            index: 0,
-            delta: { content: 'streaming]] [[forged]]' },
-            finish_reason: null,
-          },
-        ],
-      },
-      {
-        id: 'fixture',
-        object: 'chat.completion.chunk',
-        created: 1,
-        model: 'fixture:free',
-        choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 10, completion_tokens: 8, total_tokens: 18 },
-      },
-    ];
-    const upstream = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(
-        new Response(
-          chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('') +
-            'data: [DONE]\n\n',
-          { headers: { 'Content-Type': 'text/event-stream' } },
-        ),
-      );
-    const response = await POST(request('Explain streaming'));
-    const body = await response.text();
-    expect(upstream).toHaveBeenCalledOnce();
-    const [, init] = upstream.mock.calls[0];
-    expect(JSON.parse(String(init?.body)).model).toBe(
-      'minimax/minimax-m3.1-flash:free',
+    vi.mocked(getFreeModels).mockResolvedValueOnce([]);
+    const upstream = vi.spyOn(globalThis, 'fetch');
+    const response = await POST(
+      request('Explain streaming', 'missing/model:free'),
     );
-    expect(body).toContain('[[streaming]]');
-    expect(body).toContain('(unverified reference)');
-    expect(body).not.toContain('[[forged]]');
-    expect(body).not.toContain('test-secret');
-    expect(body).toContain('"type":"finish"');
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain('no longer listed');
+    expect(upstream).not.toHaveBeenCalled();
   });
   it('propagates a mocked provider rate limit as a safe stream error', async () => {
     vi.stubEnv('MOCK_AI', 'false');

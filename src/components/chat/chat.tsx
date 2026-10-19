@@ -17,15 +17,16 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import type { ChatMessage } from '@/lib/ai/types';
+import type { ChatMessage, ModelOption } from '@/lib/ai/types';
 import { documents, type Source } from '@/lib/knowledge/documents';
 import { Button } from '@/components/ui/button';
 import { Message } from './message';
 
 const transport = new DefaultChatTransport<ChatMessage>({
   api: '/api/chat',
-  prepareSendMessagesRequest: ({ messages }) => ({
+  prepareSendMessagesRequest: ({ messages, body }) => ({
     body: {
+      ...body,
       messages: messages.map((m) => ({
         id: m.id,
         role: m.role,
@@ -70,7 +71,22 @@ function saveTheme(dark: boolean) {
   }
 }
 
-export function Chat({ mock }: { mock: boolean }) {
+export function Chat({
+  mock,
+  models = [],
+  defaultModel = '',
+  modelError = '',
+}: {
+  mock: boolean;
+  models?: ModelOption[];
+  defaultModel?: string;
+  modelError?: string;
+}) {
+  const [selectedModel, setSelectedModel] = useState(() =>
+    models.some((model) => model.id === defaultModel)
+      ? defaultModel
+      : (models[0]?.id ?? ''),
+  );
   const [input, setInput] = useState('');
   const [dark, setDark] = useState(false);
   const [panel, setPanel] = useState(false);
@@ -141,21 +157,27 @@ export function Chat({ mock }: { mock: boolean }) {
       .map((p) => p.text)
       .join('') ?? '';
   function submit(text = input) {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || (!mock && !selectedModel)) return;
     setInput('');
     setNotice('');
     clearError();
     follow.current = true;
     setAway(false);
     setSourceMessage('');
-    void sendMessage({ text: text.trim() });
+    if (mock) void sendMessage({ text: text.trim() });
+    else
+      void sendMessage(
+        { text: text.trim() },
+        { body: { model: selectedModel } },
+      );
     composer.current?.focus();
   }
   function retry() {
     clearError();
     setNotice('');
     follow.current = true;
-    void regenerate();
+    if (mock) void regenerate();
+    else void regenerate({ body: { model: selectedModel } });
   }
   function reset() {
     setMessages([]);
@@ -219,11 +241,11 @@ export function Chat({ mock }: { mock: boolean }) {
         <div className="sidebar-bottom">
           <div className="mode-indicator">
             <span className="status-dot" />
-            {mock ? 'Local demo mode' : 'OpenRouter · free model'}
+            {mock ? 'Test fixtures enabled' : 'OpenRouter · free models'}
           </div>
           <p>
             {mock
-              ? 'No API key. Just curiosity.'
+              ? 'Local responses for automated tests.'
               : 'Answers from your local library.'}
           </p>
           <div className="bottom-row">
@@ -316,7 +338,11 @@ export function Chat({ mock }: { mock: boolean }) {
               </p>
               <div className="suggestions">
                 {suggestions.map(({ title, label, icon: Icon }) => (
-                  <button key={title} onClick={() => submit(title)}>
+                  <button
+                    key={title}
+                    onClick={() => submit(title)}
+                    disabled={busy || (!mock && !selectedModel)}
+                  >
                     <Icon size={20} strokeWidth={1.5} />
                     <span className="eyebrow">{label}</span>
                     <strong>{title}</strong>
@@ -392,6 +418,11 @@ export function Chat({ mock }: { mock: boolean }) {
               Jump to latest
             </Button>
           )}
+          {modelError && (
+            <p className="model-error" role="alert">
+              {modelError} <a href="/">Reload models</a>
+            </p>
+          )}
           <form
             className="composer"
             onSubmit={(e) => {
@@ -424,9 +455,36 @@ export function Chat({ mock }: { mock: boolean }) {
             <div className="composer-toolbar">
               <span>
                 <span className="tiny-sparkle">✦</span>
-                {mock ? 'Demo model' : 'OpenRouter free'}
-                <span className="toolbar-divider" />
-                Local knowledge
+                {mock ? (
+                  <span>Test fixtures</span>
+                ) : (
+                  <>
+                    <label htmlFor="model" className="sr-only">
+                      AI model
+                    </label>
+                    <select
+                      id="model"
+                      className="model-select"
+                      value={selectedModel}
+                      disabled={busy || !models.length}
+                      onChange={(event) => {
+                        setSelectedModel(event.target.value);
+                        clearError();
+                      }}
+                    >
+                      {!models.length && (
+                        <option value="">No available models</option>
+                      )}
+                      {models.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.name}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                )}
+                <span className="toolbar-divider knowledge-context" />
+                <span className="knowledge-context">Local knowledge</span>
               </span>
               {busy ? (
                 <Button
@@ -444,7 +502,7 @@ export function Chat({ mock }: { mock: boolean }) {
                   size="icon"
                   type="submit"
                   aria-label="Send message"
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || (!mock && !selectedModel)}
                 >
                   <ArrowUp size={19} />
                 </Button>

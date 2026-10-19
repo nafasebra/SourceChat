@@ -8,7 +8,10 @@ const message = z.object({
     .max(10),
 });
 export const chatRequestSchema = z
-  .object({ messages: z.array(message).min(1).max(40) })
+  .object({
+    messages: z.array(message).min(1).max(40),
+    model: z.string().min(1).max(200).optional(),
+  })
   .refine(
     ({ messages }) =>
       messages.at(-1)?.role === 'user' &&

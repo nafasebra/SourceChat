@@ -2,7 +2,7 @@
 
 **Good questions deserve grounded answers.**
 
-A focused AI chat built to explore streaming, retrieval, and source citations. Runs out of the box in local mock mode, with an optional OpenRouter connection. No database, authentication, or paid model is required.
+A focused AI chat built to explore streaming, retrieval, and source citations. Uses available free OpenRouter models, with local fixtures reserved for automated testing. No database, authentication, or paid model is required.
 
 ## Quick start
 
@@ -14,9 +14,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). On Windows PowerShell, use `Copy-Item .env.example .env.local`; if script execution is disabled, use `npm.cmd` instead of `npm`.
+Add your OpenRouter API key to `.env.local`, then open [localhost:3000](http://localhost:3000). On Windows PowerShell, use `Copy-Item .env.example .env.local`; if script execution is disabled, use `npm.cmd` instead of `npm`.
 
-`MOCK_AI=true` is the default, even without an environment file. Ask about streaming, citations, architecture, accessibility, or testing. The demo streams excerpts from local fixtures; it is deliberately not a simulated general-purpose intelligence.
+Real AI mode is the default. Choose a free model in the composer and ask about streaming, citations, architecture, accessibility, or testing. There is no demo-model option. `MOCK_AI=true` explicitly enables local fixtures for tests or offline development; it makes no external requests.
 
 ## Real AI mode
 
@@ -30,7 +30,7 @@ OPENROUTER_MODEL=minimax/minimax-m3.1-flash:free
 
 Restart the development server after changing environment values. Never prefix the key with `NEXT_PUBLIC_` or commit `.env.local`.
 
-The default model is [MiniMax M3.1 Flash (free)](https://openrouter.ai/minimax/minimax-m3.1-flash%3Afree), configured as `minimax/minimax-m3.1-flash:free`. Another available model ID ending in `:free`, or the `openrouter/free` router, can also be configured. Other IDs are rejected; there is no paid fallback. Availability, quotas, provider data policies, and model quality vary. No web search is enabled. Only real mode sends the conversation and retrieved notes to OpenRouter.
+The preferred model is [MiniMax M3.1 Flash (free)](https://openrouter.ai/minimax/minimax-m3.1-flash%3Afree), configured as `minimax/minimax-m3.1-flash:free`. The server loads the [OpenRouter model catalog](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties) and lists free text models in the composer. It accepts only free model IDs with zero listed prompt, completion, and request prices. The catalog is cached for up to five minutes and checked again on submission. If the preferred model is absent, the selector starts with the first available free model. Other IDs are rejected; there is no paid fallback. A catalog listing does not guarantee immediate capacity: free models can still be rate limited or unavailable. No web search is enabled. Only real mode sends the conversation and retrieved notes to OpenRouter.
 
 SourceChat uses this model through `@openrouter/ai-sdk-provider` and Vercel AI SDK `streamText`. The standalone `@openrouter/sdk` example uses the same model endpoint; the application keeps the AI SDK transport for its streaming UI, cancellation, and citation filtering. The API key is always read from `OPENROUTER_API_KEY` on the server.
 
@@ -99,19 +99,19 @@ Vitest covers retrieval ordering and no-match behavior, citation chunk boundarie
 
 To test a production build, run `npm run build`, then set `PLAYWRIGHT_PRODUCTION=1` before running the browser suite. Set `PLAYWRIGHT_CHANNEL=chrome` to use an existing Chrome installation instead of downloading Chromium. Set `CAPTURE_SCREENSHOTS=1` to refresh the documented browser captures. These flags are optional and are not needed for the default test commands.
 
-Verified on October 19, 2026: strict type checking, 21 Vitest tests, 10 Playwright cases against the production build (desktop Chrome and mobile viewport), and `next build`. Live OpenRouter calls have not been tested with a real API key.
+Verified on October 19, 2026: strict type checking, 30 Vitest tests, and `next build`. The real model catalog returned 18 free text models; desktop and mobile browser checks verified selection, the outgoing model ID, and citation focus with generation intercepted locally. Live OpenRouter generation has not been tested with a real API key.
 
 For a manual real-provider smoke test, enable real mode and ask “How does SSE streaming work?” Check that text appears progressively, a citation opens its local note, Stop halts generation, and Retry generates a replacement. Test invalid-key and quota errors separately. A real-provider smoke test requires your own key and is not established by mock tests.
 
 ## Example screenshots
 
-Actual captures of the production app in mock mode:
+Actual captures of the production app. The welcome screen uses the live model catalog; the cited conversation uses local test fixtures:
 
-![SourceChat desktop welcome screen](docs/screenshots/chromium-welcome.png)
+![SourceChat with available free models](docs/screenshots/desktop-models.png)
 
 ![A streamed response with its source panel](docs/screenshots/chromium-citations.png)
 
-[Mobile welcome](docs/screenshots/mobile-welcome.png) · [Mobile citations](docs/screenshots/mobile-citations.png) · [Dark mode](docs/screenshots/chromium-dark.png) · [Mobile dark mode](docs/screenshots/mobile-dark.png)
+[Mobile model selector](docs/screenshots/mobile-models.png) · [Mobile citations](docs/screenshots/mobile-citations.png) · [Dark mode](docs/screenshots/chromium-dark.png) · [Mobile dark mode](docs/screenshots/mobile-dark.png)
 
 ## Known limitations and next steps
 

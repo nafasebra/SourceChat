@@ -27,6 +27,46 @@ beforeEach(() => {
   });
 });
 describe('chat states', () => {
+  it('selects an available model and includes its ID on submit and retry', () => {
+    state.error = new Error('Please retry.');
+    render(
+      <Chat
+        mock={false}
+        models={[
+          { id: 'first/model:free', name: 'First model' },
+          { id: 'second/model:free', name: 'Second model' },
+        ]}
+        defaultModel="first/model:free"
+      />,
+    );
+    expect(screen.queryByText('Demo model')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox', { name: 'AI model' }), {
+      target: { value: 'second/model:free' },
+    });
+    fireEvent.change(screen.getByLabelText('Your message'), {
+      target: { value: 'Explain streaming' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(state.sendMessage).toHaveBeenCalledWith(
+      { text: 'Explain streaming' },
+      { body: { model: 'second/model:free' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Retry response' }));
+    expect(state.regenerate).toHaveBeenCalledWith({
+      body: { model: 'second/model:free' },
+    });
+  });
+  it('shows a catalog failure and prevents sending without available models', () => {
+    render(<Chat mock={false} modelError="Could not load available models." />);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Could not load available models',
+    );
+    fireEvent.change(screen.getByLabelText('Your message'), {
+      target: { value: 'Hello' },
+    });
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'AI model' })).toBeDisabled();
+  });
   it('shows empty state and submits a prompt with composer focus', () => {
     render(<Chat mock />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
