@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Message } from './message';
 import { cn } from '@/lib/utils';
 import { useChatHistory } from '@/hooks/use-chat-history';
+import { useTheme } from '@/hooks/use-theme';
 
 const transport = new DefaultChatTransport<ChatMessage>({
   api: '/api/chat',
@@ -65,14 +66,6 @@ const suggestions = [
   },
 ];
 
-function saveTheme(dark: boolean) {
-  try {
-    window.localStorage.setItem('sourcechat-theme', dark ? 'dark' : 'light');
-  } catch {
-    /* Theme still works when storage is unavailable. */
-  }
-}
-
 export function Chat({
   mock,
   models = [],
@@ -90,7 +83,7 @@ export function Chat({
       : (models[0]?.id ?? ''),
   );
   const [input, setInput] = useState('');
-  const [dark, setDark] = useState(false);
+  const { isDark: dark, toggleTheme } = useTheme();
   const [panel, setPanel] = useState(false);
   const [selected, setSelected] = useState('');
   const [sourceMessage, setSourceMessage] = useState('');
@@ -124,22 +117,6 @@ export function Chat({
   });
   const busy = status === 'submitted' || status === 'streaming';
   const history = useChatHistory(messages, setMessages, busy);
-  useEffect(() => {
-    let preference: string | null = null;
-    try {
-      preference = window.localStorage.getItem('sourcechat-theme');
-    } catch {
-      /* Use the system preference when storage is blocked. */
-    }
-    setDark(
-      preference
-        ? preference === 'dark'
-        : matchMedia('(prefers-color-scheme: dark)').matches,
-    );
-  }, []);
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-  }, [dark]);
   useEffect(() => {
     if (messages.length > 0 && follow.current && scroller.current)
       scroller.current.scrollTop = scroller.current.scrollHeight;
@@ -300,10 +277,7 @@ export function Chat({
               variant="ghost"
               size="icon"
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              onClick={() => {
-                saveTheme(!dark);
-                setDark(!dark);
-              }}
+              onClick={toggleTheme}
             >
               {dark ? <Sun size={17} /> : <Moon size={17} />}
             </Button>
@@ -360,10 +334,7 @@ export function Chat({
             variant="ghost"
             size="icon"
             className="hidden max-desktop:inline-flex max-desktop:h-11 max-desktop:w-10"
-            onClick={() => {
-              saveTheme(!dark);
-              setDark(!dark);
-            }}
+            onClick={toggleTheme}
             aria-label="Toggle theme"
           >
             <Moon size={17} />
