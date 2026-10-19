@@ -11,11 +11,11 @@ Captured from the production build in mock mode using Playwright and installed C
 To refresh in PowerShell:
 
 ```powershell
-npm.cmd run build
+pnpm.cmd build
 $env:PLAYWRIGHT_PRODUCTION='1'
 $env:PLAYWRIGHT_CHANNEL='chrome'
 $env:CAPTURE_SCREENSHOTS='1'
-npm.cmd run test:e2e
+pnpm.cmd test:e2e
 ```
 
 Captures use real app state and deterministic local fixtures; no external AI calls are made.

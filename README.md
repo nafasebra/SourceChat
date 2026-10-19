@@ -13,10 +13,10 @@ A simple AI chat app built with Next.js, TypeScript, Tailwind CSS, and the Verce
 
 ## Setup
 
-Requires Node.js 22.12 or newer and an [OpenRouter API key](https://openrouter.ai/settings/keys).
+Requires Node.js 22.12 or newer, [pnpm 10.21.0](https://pnpm.io/installation), and an [OpenRouter API key](https://openrouter.ai/settings/keys).
 
 ```bash
-npm ci
+pnpm install --frozen-lockfile
 cp .env.example .env.local
 ```
 
@@ -31,12 +31,12 @@ MOCK_AI=false
 Start the app:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [localhost:3000](http://localhost:3000). Restart the server after changing environment variables. Keep your API key private; it is used only on the server.
 
-On PowerShell, use `Copy-Item .env.example .env.local` instead of `cp`. Use `npm.cmd` if PowerShell blocks npm scripts.
+On PowerShell, use `Copy-Item .env.example .env.local` instead of `cp`. Use `pnpm.cmd` if PowerShell blocks pnpm scripts.
 
 ## How it works
 
@@ -49,13 +49,13 @@ History stays in this browser, with up to 20 conversations and 40 saved messages
 ## Development
 
 ```bash
-npm run format
-npm run format:check
-npm run typecheck
-npm test
-npx playwright install chromium
-npm run test:e2e
-npm run build
+pnpm format
+pnpm format:check
+pnpm typecheck
+pnpm test
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm build
 ```
 
 Install the recommended Prettier extension in VS Code to format files on save.
